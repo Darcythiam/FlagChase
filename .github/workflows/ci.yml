@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Build and CLI smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --parallel 2
+
+      - name: Exercise CLI and headless benchmark
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./build/toons --help | grep -q -- '--benchmark-trials'
+          timeout 60s ./build/toons \
+            --rows 40 --cols 100 --toons 128 --seed 42 \
+            --benchmark --benchmark-trials 2 --max-steps 5000 --no-render \
+            | tee release-smoke.log
+          grep -q 'Throughput:' release-smoke.log
+          grep -q 'Frame latency:' release-smoke.log
+
+  sanitizers:
+    name: ${{ matrix.name }} stress test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - sanitizer: thread
+            name: ThreadSanitizer
+          - sanitizer: address
+            name: ASan + UBSan
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -S . -B build-${{ matrix.sanitizer }} -DSANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=Debug
+
+      - name: Build
+        run: cmake --build build-${{ matrix.sanitizer }} --parallel 2
+
+      - name: Exercise concurrent simulation with two seeds
+        shell: bash
+        env:
+          TSAN_OPTIONS: halt_on_error=1
+          ASAN_OPTIONS: halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: |
+          set -euo pipefail
+          for seed in 42 123; do
+            timeout 60s ./build-${{ matrix.sanitizer }}/toons \
+              --rows 30 --cols 60 --toons 32 --seed "$seed" \
+              --benchmark --benchmark-trials 1 --max-steps 1000 --no-render
+          done
