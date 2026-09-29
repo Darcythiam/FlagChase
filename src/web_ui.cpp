@@ -144,60 +144,163 @@ static const char* kDashboardHtml = R"HTML(
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FlagChase — Concurrent 2D Agent Simulation</title>
+<title>FlagChase — Concurrent Simulation</title>
 <style>
-:root{--bg:#08111d;--panel:#101c2b;--panel2:#0c1725;--border:#294057;--text:#e6edf7;--muted:#8fa3b8;--green:#35d07f;--blue:#46a7ff;--red:#ff5b4d;--orange:#ff9d3d;--yellow:#ffd95a;--purple:#b47cff}
-*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#08111d,#070d16);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px;overflow-x:hidden}.top{height:56px;display:flex;align-items:center;padding:0 18px;border-bottom:1px solid #203348;background:#09131f;position:sticky;top:0;z-index:10}.brand{font-size:18px;font-weight:750;letter-spacing:.1px}.brand:before{content:"▲";color:var(--red);margin-right:10px}.topstats{margin-left:auto;display:flex;gap:28px;align-items:center;color:#cbd5e1}.running{color:var(--green)}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:currentColor;margin-right:7px}.app{display:grid;grid-template-columns:300px minmax(520px,1fr) 310px;grid-template-rows:minmax(520px,calc(100vh - 285px)) 220px;gap:10px;padding:10px;min-height:calc(100vh - 56px)}.panel{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:6px;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,.16)}.ptitle{font-size:15px;font-weight:700;padding:10px 12px;border-bottom:1px solid #293c50;background:rgba(255,255,255,.015)}.pbody{padding:12px}.left{display:flex;flex-direction:column;gap:10px;min-height:0}.right{display:flex;flex-direction:column;gap:10px;min-height:0}.left .panel:last-child,.right .panel:last-child{flex:1}.view{position:relative;display:flex;flex-direction:column;min-height:0}.canvaswrap{position:relative;flex:1;min-height:0;background:#050b12;overflow:hidden}.canvaswrap canvas{width:100%;height:100%;display:block;cursor:crosshair}.overlay{position:absolute;right:12px;top:12px;background:rgba(8,17,29,.91);border:1px solid #344b61;border-radius:5px;padding:8px 10px;line-height:1.65;pointer-events:none}.row{display:flex;align-items:center;gap:8px;margin:9px 0}.row label{color:#d3dfeb;flex:1}.value{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#fff}.btn{border:1px solid transparent;border-radius:4px;padding:9px 12px;color:#fff;background:#20344b;font-weight:650;cursor:pointer}.btn:hover{filter:brightness(1.12)}.btn.green{background:#1ba664}.btn.blue{background:#1976c9}.btn.red{background:#bc3735}.btn.orange{background:#c66a18}.btn.secondary{border-color:#425971;background:#132235}.controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:14px}input[type=range]{width:100%;accent-color:var(--blue)}input[type=number]{width:84px;background:#132235;border:1px solid #38516b;border-radius:4px;color:#fff;padding:7px}select{background:#132235;border:1px solid #38516b;color:#fff;border-radius:4px;padding:7px}.check{display:flex;gap:8px;align-items:center;margin:10px 0;color:#ccd8e4}.legend{display:grid;gap:9px}.legend span{display:flex;align-items:center;gap:9px}.mark{width:14px;height:14px;display:inline-block}.circle{border-radius:50%;background:var(--blue)}.square{background:var(--orange)}.tri{width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:15px solid var(--red)}.flag{color:var(--yellow);font-size:18px}.wall{background:#73808c}.stats{display:grid;grid-template-columns:1fr auto;gap:7px 12px}.stats .k{color:#b6c5d3}.stats .v{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.badge{display:inline-block;border:1px solid #46617c;border-radius:999px;padding:3px 8px;font-size:12px}.badge.frozen{border-color:#63b6ff;color:#86cbff}.agent-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:12px}.spatial{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#a9bdd1;line-height:1.7}.bottom{grid-column:1 / span 2;display:grid;grid-template-columns:1fr 1fr;gap:10px;min-height:0}.chart{padding:8px;height:174px}.chart canvas{width:100%;height:100%}.notes{grid-column:3;grid-row:2}.note{color:#aebfce;line-height:1.55}.note strong{color:#fff}.footer{padding:8px 12px;border-top:1px solid #24384c;color:#8297aa;font-size:12px}.small{font-size:12px;color:var(--muted)}@media(max-width:1200px){.app{grid-template-columns:260px minmax(480px,1fr);grid-template-rows:auto 560px auto auto}.right{grid-column:1 / span 2;display:grid;grid-template-columns:1fr 1fr}.notes{grid-column:1 / span 2;grid-row:auto}.bottom{grid-column:1 / span 2}.view{grid-column:2;grid-row:1 / span 2}}@media(max-width:850px){.app{display:block}.panel,.left,.right,.view,.bottom,.notes{margin-bottom:10px}.view{height:520px}.right,.bottom{display:block}.bottom .panel{height:220px}}
+:root{
+  --bg:#081019;--panel:#0e1925;--panel2:#111f2d;--line:#26394b;--line2:#35516b;
+  --text:#e8eef5;--muted:#8fa3b5;--green:#35d07f;--blue:#48a9ff;--red:#ff6257;
+  --orange:#ff9e42;--yellow:#ffd65a;--purple:#b58cff;--wall:#657486;--cell:#07111a;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:linear-gradient(180deg,#071019,#050a10);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;overflow:hidden}
+button,input{font:inherit}
+button{cursor:pointer}
+.topbar{height:54px;display:flex;align-items:center;gap:20px;padding:0 18px;border-bottom:1px solid #203244;background:#08131e}
+.brand{font-weight:800;font-size:17px;letter-spacing:.01em}.brand span{color:var(--blue)}
+.topmetrics{margin-left:auto;display:flex;gap:24px;align-items:center;color:#c3cfdb}.topmetrics b{color:#fff;font-variant-numeric:tabular-nums}
+.run{font-weight:700}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:7px}.run.paused{color:var(--yellow)}.run.paused .dot{background:var(--yellow)}.run.stopped{color:var(--orange)}.run.stopped .dot{background:var(--orange)}
+.app{height:calc(100% - 54px);padding:10px;display:grid;grid-template-columns:minmax(0,1fr) 330px;grid-template-rows:minmax(0,1fr) 188px;gap:10px}
+.panel{background:linear-gradient(180deg,var(--panel),#0b1520);border:1px solid var(--line);border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.18);overflow:hidden}
+.boardpanel{display:flex;flex-direction:column;min-width:0;min-height:0}
+.boardhead{height:44px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--line);background:#0d1925;gap:14px}.boardhead strong{font-size:14px}.boardhead .sub{color:var(--muted);font-size:11px}.boardtools{margin-left:auto;display:flex;gap:13px;align-items:center}.toggle{display:flex;gap:6px;align-items:center;color:#aebdca;font-size:11px;white-space:nowrap}.toggle input{accent-color:var(--blue)}
+.canvaswrap{position:relative;flex:1;min-height:0;background:#040a10;overflow:hidden}.canvaswrap canvas{display:block;width:100%;height:100%;cursor:crosshair}
+.hint{position:absolute;left:10px;bottom:10px;padding:6px 9px;border:1px solid #314a60;border-radius:5px;background:rgba(6,13,21,.88);color:#91a7ba;font-size:10px;pointer-events:none}.legend{position:absolute;right:10px;bottom:10px;display:flex;gap:12px;padding:6px 9px;border:1px solid #314a60;border-radius:5px;background:rgba(6,13,21,.88);font-size:10px;color:#b8c5d0;pointer-events:none}.legend span{display:flex;align-items:center;gap:5px}.lg{width:9px;height:9px;display:inline-block}.lg.runner{border-radius:50%;background:var(--blue)}.lg.jumper{width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:9px solid var(--red)}.lg.controller{background:var(--orange)}.lg.wall{background:var(--wall)}.lg.flag{color:var(--yellow);font-size:13px;width:auto;height:auto}
+.sidebar{display:flex;flex-direction:column;gap:10px;min-height:0}.section{background:linear-gradient(180deg,var(--panel),#0b1520);border:1px solid var(--line);border-radius:8px;overflow:hidden}.section.grow{flex:1;min-height:0}.stitle{height:37px;display:flex;align-items:center;padding:0 11px;border-bottom:1px solid var(--line);font-weight:750;font-size:12px}.sbody{padding:11px}.controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}.btn{border:1px solid #35506a;border-radius:5px;padding:8px 9px;background:#16283a;color:#eef5fb;font-weight:700;font-size:11px}.btn:hover{filter:brightness(1.12)}.btn.primary{background:#1979c7;border-color:#2587d8}.btn.good{background:#188455;border-color:#229563}.btn.stop{background:#963f3d;border-color:#a84d49}.btn.ghost{background:#101e2c}.row{display:flex;align-items:center;gap:8px;margin-top:10px}.row label{color:#aebdca;flex:1}.row .value{color:#fff;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}.slider{width:100%;accent-color:var(--blue)}.search{display:flex;gap:6px}.search input{min-width:0;flex:1;background:#0b1723;border:1px solid #35506a;border-radius:5px;color:#fff;padding:7px 8px}.search .btn{flex:0 0 auto}.small{font-size:10px;color:var(--muted);line-height:1.45}
+.kv{display:grid;grid-template-columns:1fr auto;gap:7px 10px}.kv .k{color:#9cafbf}.kv .v{color:#fff;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;text-align:right;font-variant-numeric:tabular-nums}.badge{display:inline-block;border:1px solid #45627c;border-radius:999px;padding:2px 7px;font-size:10px;font-family:inherit}.badge.active{color:#65dfa0;border-color:#357659}.badge.frozen{color:#7cc9ff;border-color:#3d79a2}.agentactions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.spatial{margin-top:10px;padding:9px;border:1px solid #263d52;border-radius:5px;background:#091520;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#a9bed0;font-size:10px;line-height:1.6}.spatial strong{color:#fff}
+.telemetry{grid-column:1 / span 2;display:grid;grid-template-columns:250px 1fr 1fr;gap:10px;min-height:0}.summary{padding:11px}.summary .title,.charttitle{font-weight:750;font-size:12px;margin-bottom:9px}.metricgrid{display:grid;grid-template-columns:1fr auto;gap:6px 10px;color:#aebdca}.metricgrid b{color:#fff;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.chartpanel{padding:10px;display:flex;flex-direction:column;min-width:0}.chartwrap{flex:1;min-height:0}.chartwrap canvas{width:100%;height:100%;display:block}.architecture{margin-top:8px;color:#7690a5;font-size:10px;line-height:1.45}
+@media(max-width:1050px){body{overflow:auto}.app{height:auto;min-height:calc(100% - 54px);grid-template-columns:1fr;grid-template-rows:600px auto auto}.sidebar{grid-row:2}.telemetry{grid-column:1;grid-row:3;grid-template-columns:1fr}.topmetrics{gap:12px}.topmetrics span:nth-child(2),.topmetrics span:nth-child(3){display:none}}
 </style>
 </head>
 <body>
-<header class="top"><div class="brand">FlagChase — Concurrent 2D Agent Simulation</div><div class="topstats"><span id="runState" class="running"><i class="dot"></i>Running</span><span>Steps: <b id="topSteps">0</b></span><span>Time: <b id="topTime">00:00:00</b></span><span>TPS: <b id="topTps">0</b></span></div></header>
+<header class="topbar">
+  <div class="brand"><span>Flag</span>Chase — Concurrent 2D Simulation</div>
+  <div class="topmetrics">
+    <span id="runState" class="run"><i class="dot"></i>Running</span>
+    <span>Steps <b id="topSteps">0</b></span>
+    <span>Elapsed <b id="topTime">00:00</b></span>
+    <span>Live TPS <b id="topTps">0</b></span>
+  </div>
+</header>
 <main class="app">
-<section class="left">
-<div class="panel"><div class="ptitle">Simulation Controls</div><div class="pbody">
-<div class="controls"><button id="pauseBtn" class="btn green">Pause</button><button id="resumeBtn" class="btn blue">Resume</button><button id="stopBtn" class="btn red">Stop</button></div>
-<div class="row"><label>Agent delay</label><span class="value"><span id="delayValue">0</span> ms</span></div><input id="delay" type="range" min="0" max="300" value="120">
-<label class="check"><input id="gridToggle" type="checkbox" checked> Show grid</label>
-<label class="check"><input id="followToggle" type="checkbox"> Follow selected agent</label>
-<label class="check"><input id="editWalls" type="checkbox"> Wall edit mode</label>
-<div class="small">Wall edit: click an empty cell to add/remove a wall. Scroll over the board to zoom; drag to pan.</div>
-</div></div>
-<div class="panel"><div class="ptitle">Agent Types</div><div class="pbody legend"><span><i class="mark circle"></i>RoadRunner — burst</span><span><i class="mark tri"></i>Coyote — jump</span><span><i class="mark square"></i>Yosemite Sam — freeze</span><span><i class="flag">★</i>Flag / goal</span><span><i class="mark wall"></i>Wall / obstacle</span></div></div>
-<div class="panel"><div class="ptitle">Selection</div><div class="pbody"><div class="row"><label>Agent ID</label><input id="agentSearch" type="number" min="0" value="0"></div><button id="selectAgentBtn" class="btn secondary" style="width:100%">Inspect agent</button><div class="small" style="margin-top:9px">Or click an agent directly in the simulation view.</div></div></div>
-</section>
-<section class="panel view"><div class="ptitle">Simulation View</div><div class="canvaswrap"><canvas id="sim"></canvas><div class="overlay"><div>Board: <span id="boardSize">-</span></div><div>Rendered: <span id="renderedCount">-</span></div><div>Zoom: <span id="zoomLabel">1.00×</span></div></div></div></section>
-<section class="right">
-<div class="panel"><div class="ptitle">Simulation Stats</div><div class="pbody stats"><span class="k">Agents</span><span class="v" id="statAgents">0</span><span class="k">Frozen</span><span class="v" id="statFrozen">0</span><span class="k">Board</span><span class="v" id="statBoard">-</span><span class="k">Steps</span><span class="v" id="statSteps">0</span><span class="k">Rolling TPS</span><span class="v" id="statTps">0</span><span class="k">Elapsed</span><span class="v" id="statElapsed">0.0 s</span></div></div>
-<div class="panel"><div class="ptitle">Live Agent State</div><div class="pbody" id="agentPanel"><div class="small">Select an agent to inspect its current state.</div></div></div>
-<div class="panel"><div class="ptitle">Spatial Occupancy</div><div class="pbody spatial" id="spatialPanel">Select an agent to inspect its direct cell index.</div></div>
-</section>
-<section class="bottom">
-<div class="panel"><div class="ptitle">Throughput — Rolling</div><div class="chart"><canvas id="tpsChart"></canvas></div></div>
-<div class="panel"><div class="ptitle">Frozen Agents — Live</div><div class="chart"><canvas id="frozenChart"></canvas></div></div>
-</section>
-<section class="panel notes"><div class="ptitle">Architecture Notes</div><div class="pbody note"><strong>Thread-per-agent:</strong> each active agent runs on its own OS thread.<br><br><strong>State safety:</strong> mutable board state is protected by the existing global <code>BoardLock</code> discipline.<br><br><strong>UI safety:</strong> the browser receives read-only snapshots. User commands are queued and applied by the simulation's main control loop instead of mutating board state from the HTTP thread.<br><br><strong>Benchmarks:</strong> <code>--benchmark</code> and <code>--sweep</code> remain headless and do not run this UI.</div><div class="footer">Local-only dashboard · bound to 127.0.0.1</div></section>
+  <section class="panel boardpanel">
+    <div class="boardhead">
+      <strong>Simulation Board</strong>
+      <span id="boardSize" class="sub">—</span>
+      <div class="boardtools">
+        <label class="toggle"><input id="gridToggle" type="checkbox" checked> Grid</label>
+        <label class="toggle"><input id="indexToggle" type="checkbox"> Spatial index</label>
+        <label class="toggle"><input id="editWalls" type="checkbox"> Edit walls</label>
+        <button id="resetView" class="btn ghost">Reset view</button>
+      </div>
+    </div>
+    <div class="canvaswrap">
+      <canvas id="sim"></canvas>
+      <div class="hint">Click agent to inspect · wheel to zoom · Shift+drag to pan</div>
+      <div class="legend"><span><i class="lg runner"></i>Runner</span><span><i class="lg jumper"></i>Jumper</span><span><i class="lg controller"></i>Controller</span><span><i class="lg wall"></i>Wall</span><span><i class="lg flag">★</i>Goal</span></div>
+    </div>
+  </section>
+
+  <aside class="sidebar">
+    <section class="section">
+      <div class="stitle">Simulation Control</div>
+      <div class="sbody">
+        <div class="controls"><button id="pauseBtn" class="btn good">Pause</button><button id="resumeBtn" class="btn primary">Resume</button><button id="stopBtn" class="btn stop">Stop</button></div>
+        <div class="row"><label>Frame delay</label><span class="value"><span id="delayValue">0</span> ms</span></div>
+        <input id="delay" class="slider" type="range" min="0" max="500" step="5" value="0">
+        <div class="small" style="margin-top:8px">UI controls are queued and applied by the simulation control loop; the browser never mutates shared board state directly.</div>
+      </div>
+    </section>
+
+    <section class="section grow">
+      <div class="stitle">Live Agent State</div>
+      <div class="sbody">
+        <div class="search"><input id="agentSearch" type="number" min="0" placeholder="Agent ID"><button id="selectAgentBtn" class="btn">Inspect</button></div>
+        <div id="agentPanel" style="margin-top:11px"><div class="small">Click an agent on the board or enter an ID.</div></div>
+        <div id="spatialPanel" class="spatial">Select an agent to inspect its direct cell index.</div>
+      </div>
+    </section>
+  </aside>
+
+  <section class="telemetry">
+    <div class="panel summary">
+      <div class="title">Engineering Telemetry</div>
+      <div class="metricgrid">
+        <span>Agents</span><b id="statAgents">0</b>
+        <span>Rendered</span><b id="renderedCount">0</b>
+        <span>Frozen</span><b id="statFrozen">0</b>
+        <span>Board</span><b id="statBoard">—</b>
+        <span>Total steps</span><b id="statSteps">0</b>
+        <span>Live TPS</span><b id="statTps">0</b>
+      </div>
+      <div class="architecture">Thread-per-agent · mutex-protected shared state · O(1) direct cell occupancy index · snapshot-based browser reads</div>
+    </div>
+    <div class="panel chartpanel"><div class="charttitle">Rolling Throughput</div><div class="chartwrap"><canvas id="tpsChart"></canvas></div></div>
+    <div class="panel chartpanel"><div class="charttitle">Frozen Agents</div><div class="chartwrap"><canvas id="frozenChart"></canvas></div></div>
+  </section>
 </main>
 <script>
-const $=id=>document.getElementById(id);let layout=null,state=null,selected=-1,lastSteps=0,lastPoll=performance.now(),rollingTps=0;let tpsHist=[],frozenHist=[];let zoom=1,panX=0,panY=0,drag=false,dragStart=null;let wallSet=new Set();
-const roleColor=['#46a7ff','#ff5b4d','#ff9d3d'];
-function fmtTime(sec){sec=Math.max(0,Math.floor(sec));const h=String(Math.floor(sec/3600)).padStart(2,'0'),m=String(Math.floor(sec%3600/60)).padStart(2,'0'),s=String(sec%60).padStart(2,'0');return `${h}:${m}:${s}`}
+const $=id=>document.getElementById(id);
+let layout=null,state=null,selected=-1,lastSteps=0,lastPoll=performance.now(),rollingTps=0;
+let tpsHist=[],frozenHist=[],zoom=1,panX=0,panY=0,drag=false,dragStart=null,wallSet=new Set();
+const roleColor=['#48a9ff','#ff6257','#ff9e42'];
+const roleName=['Runner','Jumper','Controller'];
+
 async function getJson(url,opt){const r=await fetch(url,opt);if(!r.ok)throw new Error(await r.text());return r.json()}
+function fmtTime(sec){sec=Math.max(0,Math.floor(sec));const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;return h?`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`}
 async function loadLayout(){layout=await getJson('/api/layout');wallSet=new Set(layout.walls.map(w=>w[0]+','+w[1]));$('boardSize').textContent=`${layout.rows} × ${layout.cols}`;$('statBoard').textContent=`${layout.rows}×${layout.cols}`;draw()}
 async function command(cmd,args={}){const q=new URLSearchParams({cmd,...args});await getJson('/api/control?'+q.toString(),{method:'POST'});if(cmd==='addwall'||cmd==='removewall')await loadLayout()}
-function updateStats(s){$('topSteps').textContent=s.totalSteps.toLocaleString();$('topTime').textContent=fmtTime(s.elapsedSec);$('statAgents').textContent=s.totalAgents.toLocaleString();$('statFrozen').textContent=s.frozenAgents.toLocaleString();$('statSteps').textContent=s.totalSteps.toLocaleString();$('statElapsed').textContent=s.elapsedSec.toFixed(1)+' s';$('renderedCount').textContent=`${s.displayedAgents.toLocaleString()} / ${s.totalAgents.toLocaleString()}`;$('delay').value=s.delayMs;$('delayValue').textContent=s.delayMs;const now=performance.now(),dt=(now-lastPoll)/1000,ds=s.totalSteps-lastSteps;if(lastSteps>0&&dt>0){const inst=ds/dt;rollingTps=rollingTps?rollingTps*.72+inst*.28:inst;tpsHist.push(rollingTps);frozenHist.push(s.frozenAgents);if(tpsHist.length>90)tpsHist.shift();if(frozenHist.length>90)frozenHist.shift()}lastSteps=s.totalSteps;lastPoll=now;$('topTps').textContent=Math.round(rollingTps).toLocaleString();$('statTps').textContent=Math.round(rollingTps).toLocaleString();const rs=$('runState');$('stopBtn').textContent=s.gameOver?'Close':'Stop';if(s.gameOver){rs.className='';rs.style.color='#ff9d3d';rs.innerHTML='<i class="dot"></i>Stopped'}else if(s.paused){rs.className='';rs.style.color='#ffd95a';rs.innerHTML='<i class="dot"></i>Paused'}else{rs.className='running';rs.style.color='';rs.innerHTML='<i class="dot"></i>Running'}drawCharts()}
-function updateAgent(a){const p=$('agentPanel'),sp=$('spatialPanel');if(!a){p.innerHTML='<div class="small">Select an agent to inspect its current state.</div>';sp.textContent='Select an agent to inspect its direct cell index.';return}const role=['RoadRunner','Coyote','Yosemite Sam'][a.role]||'Unknown';const op=a.frozen?'FROZEN':'ACTIVE';const shoot=a.role===2?(a.canShoot?'READY':`${a.cooldownRemainingMs} ms`):'N/A';p.innerHTML=`<div class="stats"><span class="k">ID</span><span class="v">${a.id}</span><span class="k">Type</span><span class="v">${role}</span><span class="k">State</span><span class="v"><span class="badge ${a.frozen?'frozen':''}">${op}</span></span><span class="k">Position</span><span class="v">(${a.r}, ${a.c})</span><span class="k">Steps</span><span class="v">${a.steps.toLocaleString()}</span><span class="k">Freeze left</span><span class="v">${a.freezeRemainingMs} ms</span><span class="k">Shoot capability</span><span class="v">${shoot}</span></div><div class="agent-actions"><button class="btn blue" onclick="command('freeze',{id:${a.id},ms:1500})">Freeze 1.5s</button><button class="btn secondary" onclick="command('unfreeze',{id:${a.id}})">Unfreeze</button></div>`;const idx=a.r*state.cols+a.c;sp.innerHTML=`Cell: (${a.r}, ${a.c})<br>Index: ${idx}<br>occupant[index]: ${a.id}<br><span class="small">Direct O(1) occupancy mapping</span>`}
-async function poll(){try{state=await getJson('/api/state?selected='+selected);updateStats(state);updateAgent(state.selected);if($('followToggle').checked&&state.selected&&layout){const c=cellGeometry();panX=c.viewW/2-(state.selected.c+.5)*c.cw*zoom;panY=c.viewH/2-(state.selected.r+.5)*c.ch*zoom}draw()}catch(e){console.error(e)}setTimeout(poll,150)}
-function resizeCanvas(canvas){const dpr=window.devicePixelRatio||1,rect=canvas.getBoundingClientRect();const w=Math.max(1,Math.floor(rect.width*dpr)),h=Math.max(1,Math.floor(rect.height*dpr));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}return{w,h,dpr}}
-function cellGeometry(){const c=$('sim'),{w,h}=resizeCanvas(c),cw=w/layout.cols,ch=h/layout.rows;return{viewW:w,viewH:h,cw,ch}}
-function draw(){if(!layout||!state)return;const c=$('sim'),ctx=c.getContext('2d'),g=cellGeometry();ctx.clearRect(0,0,g.viewW,g.viewH);ctx.save();ctx.translate(panX,panY);ctx.scale(zoom,zoom);ctx.fillStyle='#060c13';ctx.fillRect(0,0,g.viewW/zoom,g.viewH/zoom);for(const [r,col] of layout.walls){ctx.fillStyle='#596775';ctx.fillRect(col*g.cw,r*g.ch,Math.ceil(g.cw),Math.ceil(g.ch))}if($('gridToggle').checked&&(g.cw*zoom>5&&g.ch*zoom>5)){ctx.strokeStyle='rgba(83,111,137,.20)';ctx.lineWidth=1/zoom;ctx.beginPath();for(let x=0;x<=layout.cols;x++){ctx.moveTo(x*g.cw,0);ctx.lineTo(x*g.cw,layout.rows*g.ch)}for(let y=0;y<=layout.rows;y++){ctx.moveTo(0,y*g.ch);ctx.lineTo(layout.cols*g.cw,y*g.ch)}ctx.stroke()}const fr=layout.flag.r,fc=layout.flag.c;ctx.fillStyle='#ffd95a';ctx.font=`${Math.max(10,Math.min(g.cw,g.ch)*1.1)}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('★',(fc+.5)*g.cw,(fr+.5)*g.ch);for(const a of state.agents){const x=(a.c+.5)*g.cw,y=(a.r+.5)*g.ch,rad=Math.max(2,Math.min(g.cw,g.ch)*.34);ctx.fillStyle=roleColor[a.role]||'#fff';ctx.strokeStyle=a.id===selected?'#fff':'rgba(0,0,0,.3)';ctx.lineWidth=(a.id===selected?2.5:1)/zoom;ctx.beginPath();if(a.role===0){ctx.arc(x,y,rad,0,Math.PI*2)}else if(a.role===1){ctx.moveTo(x,y-rad);ctx.lineTo(x+rad,y+rad);ctx.lineTo(x-rad,y+rad);ctx.closePath()}else{ctx.rect(x-rad,y-rad,rad*2,rad*2)}ctx.fill();ctx.stroke();if(a.frozen&&rad>3){ctx.strokeStyle='#9bd7ff';ctx.lineWidth=2/zoom;ctx.beginPath();ctx.arc(x,y,rad*1.45,0,Math.PI*2);ctx.stroke()}}ctx.restore();$('zoomLabel').textContent=zoom.toFixed(2)+'×'}
-function drawLineChart(canvas,data,color){const ctx=canvas.getContext('2d'),{w,h}=resizeCanvas(canvas);ctx.clearRect(0,0,w,h);ctx.strokeStyle='#2b4156';ctx.lineWidth=1;for(let i=1;i<4;i++){const y=h*i/4;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}if(data.length<2)return;let max=Math.max(...data,1),min=Math.min(...data,0);if(max===min)max=min+1;ctx.strokeStyle=color;ctx.lineWidth=2;ctx.beginPath();data.forEach((v,i)=>{const x=i/(Math.max(1,data.length-1))*w,y=h-((v-min)/(max-min))*(h*.82)-h*.08;i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();ctx.fillStyle='#8fa3b8';ctx.font=`${12*(window.devicePixelRatio||1)}px sans-serif`;ctx.fillText(Math.round(max).toLocaleString(),6,15*(window.devicePixelRatio||1));ctx.fillText(Math.round(min).toLocaleString(),6,h-5)}
-function drawCharts(){drawLineChart($('tpsChart'),tpsHist,'#35d07f');drawLineChart($('frozenChart'),frozenHist,'#b47cff')}
-function canvasToCell(evt){if(!layout)return null;const c=$('sim'),rect=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1,g=cellGeometry();let x=(evt.clientX-rect.left)*dpr,y=(evt.clientY-rect.top)*dpr;x=(x-panX)/zoom;y=(y-panY)/zoom;const col=Math.floor(x/g.cw),r=Math.floor(y/g.ch);if(r<0||r>=layout.rows||col<0||col>=layout.cols)return null;return{r,c:col}}
-$('pauseBtn').onclick=()=>command('pause');$('resumeBtn').onclick=()=>command('resume');$('stopBtn').onclick=()=>command('stop');$('delay').oninput=e=>{$('delayValue').textContent=e.target.value};$('delay').onchange=e=>command('speed',{ms:e.target.value});$('selectAgentBtn').onclick=()=>{selected=Math.max(-1,parseInt($('agentSearch').value||'-1'));};$('gridToggle').onchange=draw;
-const sim=$('sim');sim.addEventListener('wheel',e=>{e.preventDefault();const old=zoom;zoom=Math.max(.5,Math.min(12,zoom*(e.deltaY<0?1.15:.87)));const rect=sim.getBoundingClientRect(),dpr=window.devicePixelRatio||1,mx=(e.clientX-rect.left)*dpr,my=(e.clientY-rect.top)*dpr;panX=mx-(mx-panX)*(zoom/old);panY=my-(my-panY)*(zoom/old);draw()},{passive:false});sim.addEventListener('mousedown',e=>{if(e.button===1||e.shiftKey){drag=true;dragStart={x:e.clientX,y:e.clientY,px:panX,py:panY}}});window.addEventListener('mouseup',()=>drag=false);window.addEventListener('mousemove',e=>{if(!drag)return;const dpr=window.devicePixelRatio||1;panX=dragStart.px+(e.clientX-dragStart.x)*dpr;panY=dragStart.py+(e.clientY-dragStart.y)*dpr;draw()});sim.addEventListener('click',async e=>{if(drag)return;const cell=canvasToCell(e);if(!cell)return;if($('editWalls').checked){const key=cell.r+','+cell.c;if(wallSet.has(key))await command('removewall',{r:cell.r,c:cell.c});else await command('addwall',{r:cell.r,c:cell.c});return}if(!state)return;let found=null;for(const a of state.agents)if(a.r===cell.r&&a.c===cell.c){found=a;break}if(found){selected=found.id;$('agentSearch').value=found.id}});window.addEventListener('resize',()=>{draw();drawCharts()});
+
+function updateStats(s){
+  $('topSteps').textContent=s.totalSteps.toLocaleString();$('topTime').textContent=fmtTime(s.elapsedSec);
+  $('statAgents').textContent=s.totalAgents.toLocaleString();$('statFrozen').textContent=s.frozenAgents.toLocaleString();$('statSteps').textContent=s.totalSteps.toLocaleString();
+  $('renderedCount').textContent=`${s.displayedAgents.toLocaleString()} / ${s.totalAgents.toLocaleString()}`;$('delay').value=s.delayMs;$('delayValue').textContent=s.delayMs;
+  const now=performance.now(),dt=(now-lastPoll)/1000,ds=s.totalSteps-lastSteps;
+  if(lastSteps>0&&dt>0){const inst=ds/dt;rollingTps=rollingTps?rollingTps*.72+inst*.28:inst;tpsHist.push(rollingTps);frozenHist.push(s.frozenAgents);if(tpsHist.length>100)tpsHist.shift();if(frozenHist.length>100)frozenHist.shift()}
+  lastSteps=s.totalSteps;lastPoll=now;$('topTps').textContent=Math.round(rollingTps).toLocaleString();$('statTps').textContent=Math.round(rollingTps).toLocaleString();
+  const rs=$('runState');rs.className='run'+(s.gameOver?' stopped':s.paused?' paused':'');rs.innerHTML=`<i class="dot"></i>${s.gameOver?'Stopped':s.paused?'Paused':'Running'}`;$('stopBtn').textContent=s.gameOver?'Close':'Stop';drawCharts()
+}
+function updateAgent(a){
+  const p=$('agentPanel'),sp=$('spatialPanel');
+  if(!a){p.innerHTML='<div class="small">Click an agent on the board or enter an ID.</div>';sp.textContent='Select an agent to inspect its direct cell index.';return}
+  const op=a.frozen?'FROZEN':'ACTIVE';const shoot=a.role===2?(a.canShoot?'READY':`${a.cooldownRemainingMs} ms`):'N/A';
+  p.innerHTML=`<div class="kv"><span class="k">ID</span><span class="v">${a.id}</span><span class="k">Role</span><span class="v">${roleName[a.role]||'Agent'}</span><span class="k">State</span><span class="v"><span class="badge ${a.frozen?'frozen':'active'}">${op}</span></span><span class="k">Position</span><span class="v">(${a.r}, ${a.c})</span><span class="k">Steps</span><span class="v">${a.steps.toLocaleString()}</span><span class="k">Freeze left</span><span class="v">${a.freezeRemainingMs} ms</span><span class="k">Shoot capability</span><span class="v">${shoot}</span></div><div class="agentactions"><button class="btn primary" onclick="command('freeze',{id:${a.id},ms:1500})">Freeze 1.5s</button><button class="btn ghost" onclick="command('unfreeze',{id:${a.id}})">Unfreeze</button></div>`;
+  const idx=a.r*state.cols+a.c;sp.innerHTML=`<strong>Spatial occupancy index</strong><br>cell = (${a.r}, ${a.c})<br>index = ${idx}<br>occupant[index] = ${a.id}<br><span class="small">Direct O(1) exact-cell lookup</span>`
+}
+async function poll(){
+  try{state=await getJson('/api/state?selected='+selected);updateStats(state);updateAgent(state.selected);draw()}catch(e){console.error(e)}
+  setTimeout(poll,100)
+}
+function resizeCanvas(c){const dpr=window.devicePixelRatio||1,r=c.getBoundingClientRect(),w=Math.max(1,Math.floor(r.width*dpr)),h=Math.max(1,Math.floor(r.height*dpr));if(c.width!==w||c.height!==h){c.width=w;c.height=h}return{w,h,dpr}}
+function cellGeometry(){const c=$('sim'),s=resizeCanvas(c);return{...s,cw:s.w/Math.max(1,layout.cols),ch:s.h/Math.max(1,layout.rows),viewW:s.w,viewH:s.h}}
+function draw(){
+  if(!layout||!state)return;const c=$('sim'),ctx=c.getContext('2d'),g=cellGeometry();ctx.clearRect(0,0,g.viewW,g.viewH);ctx.save();ctx.translate(panX,panY);ctx.scale(zoom,zoom);
+  ctx.fillStyle='#050c13';ctx.fillRect(0,0,g.viewW/zoom,g.viewH/zoom);
+  if($('gridToggle').checked&&(g.cw*zoom>4&&g.ch*zoom>4)){ctx.strokeStyle='rgba(75,108,136,.20)';ctx.lineWidth=1/zoom;ctx.beginPath();for(let x=0;x<=layout.cols;x++){ctx.moveTo(x*g.cw,0);ctx.lineTo(x*g.cw,layout.rows*g.ch)}for(let y=0;y<=layout.rows;y++){ctx.moveTo(0,y*g.ch);ctx.lineTo(layout.cols*g.cw,y*g.ch)}ctx.stroke()}
+  for(const [r,col] of layout.walls){ctx.fillStyle='#657486';ctx.fillRect(col*g.cw,r*g.ch,Math.ceil(g.cw),Math.ceil(g.ch))}
+  if($('indexToggle').checked&&g.cw*zoom>30&&g.ch*zoom>22){ctx.fillStyle='rgba(128,163,191,.45)';ctx.font=`${Math.max(7,Math.min(10,g.ch*.22))}px ui-monospace,monospace`;ctx.textAlign='left';ctx.textBaseline='top';for(let r=0;r<layout.rows;r++)for(let col=0;col<layout.cols;col++)ctx.fillText(String(r*layout.cols+col),col*g.cw+2/zoom,r*g.ch+2/zoom)}
+  const fr=layout.flag.r,fc=layout.flag.c;ctx.fillStyle='#ffd65a';ctx.font=`${Math.max(10,Math.min(g.cw,g.ch)*1.05)}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('★',(fc+.5)*g.cw,(fr+.5)*g.ch);
+  for(const a of state.agents){const x=(a.c+.5)*g.cw,y=(a.r+.5)*g.ch,rad=Math.max(2,Math.min(g.cw,g.ch)*.34);ctx.fillStyle=roleColor[a.role]||'#fff';ctx.strokeStyle=a.id===selected?'#fff':'rgba(0,0,0,.35)';ctx.lineWidth=(a.id===selected?2.4:1)/zoom;ctx.beginPath();if(a.role===0){ctx.arc(x,y,rad,0,Math.PI*2)}else if(a.role===1){ctx.moveTo(x,y-rad);ctx.lineTo(x+rad,y+rad);ctx.lineTo(x-rad,y+rad);ctx.closePath()}else{ctx.rect(x-rad,y-rad,rad*2,rad*2)}ctx.fill();ctx.stroke();if(a.frozen&&rad>3){ctx.strokeStyle='#9bd7ff';ctx.lineWidth=2/zoom;ctx.beginPath();ctx.arc(x,y,rad*1.45,0,Math.PI*2);ctx.stroke()}}
+  ctx.restore()
+}
+function canvasToCell(e){if(!layout)return null;const c=$('sim'),r=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1,g=cellGeometry(),x=((e.clientX-r.left)*dpr-panX)/zoom,y=((e.clientY-r.top)*dpr-panY)/zoom,col=Math.floor(x/g.cw),row=Math.floor(y/g.ch);if(row<0||row>=layout.rows||col<0||col>=layout.cols)return null;return{r:row,c:col}}
+function drawLineChart(canvas,data,color){const ctx=canvas.getContext('2d'),S=resizeCanvas(canvas),w=S.w,h=S.h;ctx.clearRect(0,0,w,h);ctx.strokeStyle='#23394c';ctx.lineWidth=1;for(let i=1;i<4;i++){const y=h*i/4;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}if(data.length<2)return;let max=Math.max(...data,1),min=Math.min(...data,0);if(max===min)max=min+1;ctx.strokeStyle=color;ctx.lineWidth=2*(S.dpr||1);ctx.beginPath();data.forEach((v,i)=>{const x=i/Math.max(1,data.length-1)*w,y=h-((v-min)/(max-min))*(h*.78)-h*.1;i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();ctx.fillStyle='#8fa3b5';ctx.font=`${10*(S.dpr||1)}px sans-serif`;ctx.fillText(Math.round(max).toLocaleString(),5,12*(S.dpr||1));ctx.fillText(Math.round(min).toLocaleString(),5,h-4)}
+function drawCharts(){drawLineChart($('tpsChart'),tpsHist,'#35d07f');drawLineChart($('frozenChart'),frozenHist,'#b58cff')}
+
+$('pauseBtn').onclick=()=>command('pause');$('resumeBtn').onclick=()=>command('resume');$('stopBtn').onclick=()=>command('stop');
+$('delay').oninput=e=>$('delayValue').textContent=e.target.value;$('delay').onchange=e=>command('speed',{ms:e.target.value});
+$('selectAgentBtn').onclick=()=>{selected=Math.max(-1,parseInt($('agentSearch').value||'-1'));};$('gridToggle').onchange=draw;$('indexToggle').onchange=draw;
+$('resetView').onclick=()=>{zoom=1;panX=0;panY=0;draw()};
+const sim=$('sim');
+sim.addEventListener('wheel',e=>{e.preventDefault();const old=zoom;zoom=Math.max(.5,Math.min(12,zoom*(e.deltaY<0?1.15:.87)));const rect=sim.getBoundingClientRect(),dpr=window.devicePixelRatio||1,mx=(e.clientX-rect.left)*dpr,my=(e.clientY-rect.top)*dpr;panX=mx-(mx-panX)*(zoom/old);panY=my-(my-panY)*(zoom/old);draw()},{passive:false});
+sim.addEventListener('mousedown',e=>{if(e.button===1||e.shiftKey){drag=true;dragStart={x:e.clientX,y:e.clientY,px:panX,py:panY}}});window.addEventListener('mouseup',()=>drag=false);window.addEventListener('mousemove',e=>{if(!drag)return;const dpr=window.devicePixelRatio||1;panX=dragStart.px+(e.clientX-dragStart.x)*dpr;panY=dragStart.py+(e.clientY-dragStart.y)*dpr;draw()});
+sim.addEventListener('click',async e=>{if(drag)return;const cell=canvasToCell(e);if(!cell)return;if($('editWalls').checked){const key=cell.r+','+cell.c;if(wallSet.has(key))await command('removewall',{r:cell.r,c:cell.c});else await command('addwall',{r:cell.r,c:cell.c});return}if(!state)return;let found=null;for(const a of state.agents)if(a.r===cell.r&&a.c===cell.c){found=a;break}if(found){selected=found.id;$('agentSearch').value=found.id;updateAgent(found)}});
+window.addEventListener('resize',()=>{draw();drawCharts()});
 (async()=>{await loadLayout();poll()})().catch(console.error);
 </script>
-</body></html>
+</body>
+</html>
+
 )HTML";
 
 #ifdef __linux__

@@ -29,8 +29,9 @@ The current implementation uses a coarse-grained global board lock for correctne
 - Streaming latency statistics using Welford aggregation
 - Optional mutex wait-time instrumentation
 - Dedicated **ThreadSanitizer** and **AddressSanitizer + UBSan** build modes
-- Interactive ASCII rendering for normal runs; headless execution for benchmarks
-- Optional **browser dashboard** (`--ui`) with a live canvas view, pause/resume/speed control, click-to-inspect agents, wall editing, and rolling throughput/frozen-agent charts
+- Interactive ASCII rendering plus an optional **local browser dashboard**
+- Live agent-state inspection, pause/resume, speed control, wall editing, and rolling telemetry
+- Headless execution for benchmarks so UI work never contaminates performance measurements
 
 ---
 
@@ -41,26 +42,32 @@ The current implementation uses a coarse-grained global board lock for correctne
                                │
                     parse args / print config
                                │
-            ┌──────────────────┼──────────────────┐
-            │                  │                  │
-       interactive         benchmark            sweep
-            │                  │                  │
-            └──────────────────┴──────────────────┘
+          ┌────────────────────┼────────────────────┐
+          │                    │                    │
+     interactive           benchmark              sweep
+          │                    │                    │
+          └────────────────────┴────────────────────┘
                                │
                           runOneGame()
                                │
                          shared Board
                                │
-                     ┌─────────┴─────────┐
-                     │                   │
-                  board.mtx         render_mtx
-                     │                   │
-          shared simulation state      stdout
-                     │
-         ┌───────────┼───────────┐
-         │           │           │
-      thread 0    thread 1    thread N
-       agent 0     agent 1     agent N
+            ┌──────────────────┼──────────────────┐
+            │                  │                  │
+        board.mtx         ASCII output       optional --ui
+            │                                     │
+   shared simulation state              read-only snapshots
+            │                                     │
+   ┌────────┼────────┐                    localhost HTTP
+   │        │        │                           │
+thread 0 thread 1 thread N               browser dashboard
+ agent 0   agent 1   agent N                     │
+                                             commands
+                                                 │
+                                      thread-safe command queue
+                                                 │
+                                      main control loop applies
+                                      commands under BoardLock
 ```
 
 Every active agent owns an OS thread. Those workers interact through a single shared `Board` instance containing positions, terrain, timers, cooldowns, step counters, render state, and the spatial occupancy index.
@@ -97,6 +104,18 @@ board.mtx  →  render_mtx
 
 A thread-local assertion catches attempts to acquire the board lock while already holding the render lock in debug builds, reducing the chance of introducing an inverted lock-order deadlock later.
 
+### Race-condition debugging
+
+During development, a genuine race was found in the freeze-timer path: one code path read `frozen_until[t]` without synchronization while another path could update that same value while holding the board mutex.
+
+The fix was to move the read under the same synchronization discipline as the write.
+
+The important lesson is simple:
+
+> Protecting writes alone is not sufficient when concurrent reads can race with those writes.
+
+---
+
 ## Agent Behaviors
 
 The three behavior roles repeat when the simulation is run with more than three agents:
@@ -108,6 +127,102 @@ The three behavior roles repeat when the simulation is run with more than three 
 | **Yosemite Sam** | Can target another agent, shoot, and temporarily freeze it subject to a cooldown |
 
 All behaviors operate against the same shared board state, making them useful for exercising synchronization under different access patterns.
+
+---
+
+## Board-Centric Browser Dashboard
+
+FlagChase includes an optional **board-centric engineering dashboard** served directly by the C++ process on **localhost**. The simulation remains a discrete 2D grid: walls, the goal, and agents are rendered directly from live simulation snapshots, while controls and debugging information stay outside the board. The frontend is embedded HTML/CSS/JavaScript served by a lightweight C++ HTTP server, so there is no Node.js, React, or external GUI framework required.
+
+Run it with:
+
+```bash
+./build/toons \
+  --rows 60 \
+  --cols 120 \
+  --toons 120 \
+  --seed 12345 \
+  --delay-ms 60 \
+  --max-steps 100000 \
+  --ui
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8080
+```
+
+Use a different port if needed:
+
+```bash
+./build/toons --ui --ui-port 9090
+```
+
+### Dashboard features
+
+- real-time **grid/board view** of agents, walls, and the goal
+- optional cell-grid and **spatial-index overlays** for inspecting the O(1) occupancy mapping
+- pause and resume controls
+- live simulation-speed control
+- zoom and pan
+- click-to-select agent inspection
+- searchable agent ID selection
+- live operational state: position, step count, frozen state, remaining freeze time, and Yosemite Sam shooting cooldown/readiness
+- freeze / unfreeze controls for the selected agent
+- wall add/remove edit mode
+- direct spatial-index information for the selected cell
+- rolling throughput graph
+- live frozen-agent count graph
+- final-state inspection after a natural winner is declared
+
+The live state panel intentionally derives its status from the simulation's existing data rather than adding a cosmetic state machine. For example, `FROZEN` is derived from `frozen_until`, while shooting readiness is treated as a capability of the Yosemite Sam role rather than incorrectly turning the entire agent into a global `COOLDOWN` state.
+
+### UI concurrency boundary
+
+The browser does **not** receive a pointer to simulation state and does not mutate `Board` from the HTTP thread.
+
+Read path:
+
+```text
+Browser poll
+    ↓
+HTTP server thread
+    ↓
+brief BoardLock
+    ↓
+copy agent/layout snapshot
+    ↓
+unlock
+    ↓
+serialize JSON / render in browser
+```
+
+Write/control path:
+
+```text
+Browser control
+    ↓
+HTTP server thread
+    ↓
+thread-safe command queue
+    ↓
+main simulation control loop
+    ↓
+BoardLock when board mutation is required
+```
+
+That boundary matters for the hardware/device-control style of reasoning behind the live-state feature: inspect current state and validate the operation before applying it, instead of letting presentation code modify shared concurrent state directly.
+
+### Large-agent runs
+
+The dashboard reports statistics for the full population but caps the number of serialized/rendered agent markers to avoid sending enormous JSON frames. The default is 5,000 agents:
+
+```bash
+./build/toons --ui --ui-max-agents 2000
+```
+
+High-scale throughput claims should still be measured through `--benchmark` / `--sweep`, not through the dashboard. Those modes automatically disable the UI and ASCII rendering.
 
 ---
 
@@ -234,34 +349,6 @@ Example sweep:
   --csv-out bench_spatial_index.csv \
   --no-render
 ```
-
----
-
-## Web Dashboard
-
-An optional browser dashboard replaces ASCII rendering with a live, interactive view of the simulation, served from an embedded HTTP server that runs alongside the worker threads:
-
-```bash
-./build/toons --rows 40 --cols 80 --toons 30 --ui --ui-port 8080
-```
-
-Then open `http://localhost:8080`. The dashboard:
-
-- renders the board and agents on a pannable, zoomable canvas
-- supports pause / resume / stop and live agent-delay (speed) control
-- lets you click an agent (or search by ID) to inspect its position, state, freeze/cooldown timers, and step count, including its direct `occupant[]` index
-- supports click-to-add/remove walls
-- plots rolling throughput and frozen-agent count
-
-The server exposes three endpoints polled by the dashboard's own JS, and usable directly:
-
-```text
-GET  /api/layout            board dimensions, flag position, walls
-GET  /api/state?selected=N  live agent snapshot, optionally with one agent's detail
-POST /api/control?cmd=...   pause | resume | stop | speed | freeze | unfreeze | addwall | removewall
-```
-
-The browser only ever reads a snapshot of the shared `Board` (via the same `board.mtx`-protected accessors used by the simulation loop) and queues commands into it — it never mutates simulation state directly, keeping the visualization layer separate from the synchronization-critical path. `--ui` disables ASCII rendering for the run; it is not meant for `--benchmark`/`--sweep`, which stay headless.
 
 ---
 
@@ -407,8 +494,10 @@ The current implementation intentionally keeps several design constraints visibl
 
 - A **single global board mutex** serializes mutable board-state access.
 - The simulation uses **one OS thread per agent**, so very large agent counts can oversubscribe the machine.
-- Interactive ASCII rendering is synchronous and not designed for high-scale runs; the `--ui` browser dashboard is a better fit for large agent counts but still polls state rather than pushing updates.
-- The source is currently concentrated in `src/main.cpp` rather than split into separate engine, UI, and domain modules.
+- Interactive ASCII rendering remains synchronous and is not designed for high-scale runs.
+- The browser dashboard currently targets Linux and binds only to `127.0.0.1`.
+- Very large populations are intentionally capped in the visualization payload even though simulation statistics still reflect the full population.
+- The simulation core is still concentrated in `src/main.cpp`; the dashboard server is separated into `src/web_ui.cpp` / `src/web_ui.hpp`, but broader engine/domain modularization is future work.
 - The occupancy index optimizes collision lookup, but it does not remove the global-lock architecture itself.
 
 These constraints are useful because they make the tradeoffs measurable and provide clear directions for future work.
@@ -419,13 +508,15 @@ These constraints are useful because they make the tradeoffs measurable and prov
 
 Planned improvements are intentionally kept separate from the benchmarked core so each architectural change can be measured independently.
 
-### GUI / simulation dashboard
+### Dashboard follow-ups
 
-The browser dashboard described above (`--ui`) covers most of what was originally planned here: a live 2D view, pause/resume, speed control, click-to-inspect agents with live position/freeze/cooldown/step display, the spatial-occupancy index overlay, wall editing, and rolling throughput/frozen-agent charts. Not yet implemented:
+The browser dashboard is implemented. Potential incremental improvements include:
 
-- a **reset** control (only pause / resume / stop)
-- changing **agent count or board size** without restarting the process
-- a general environment editor beyond wall add/remove
+- restart/reset without relaunching the process
+- spawning/removing agents at runtime
+- richer action-history/event tracing
+- optional snapshots suitable for recording/replay
+- a dedicated live latency metric if it can be collected without contaminating benchmark behavior
 
 ### Additional architectural experiments
 
@@ -438,3 +529,27 @@ Potential future work includes:
 Those are deliberately future experiments rather than claims about the current implementation.
 
 ---
+
+## Why This Project Exists
+
+The project started as a small concurrent simulation and became an exercise in systems reasoning:
+
+```text
+build concurrent behavior
+        ↓
+find a real synchronization bug
+        ↓
+make shared-state access consistent
+        ↓
+measure scaling behavior
+        ↓
+identify an O(N) hot path inside the critical section
+        ↓
+change the data representation
+        ↓
+rerun the same benchmark
+        ↓
+quantify the improvement
+```
+
+The main goal is not the game itself. It is understanding how correctness, synchronization, algorithms, and measurement interact in a concurrent C++ program.
