@@ -97,18 +97,6 @@ board.mtx  →  render_mtx
 
 A thread-local assertion catches attempts to acquire the board lock while already holding the render lock in debug builds, reducing the chance of introducing an inverted lock-order deadlock later.
 
-### Race-condition debugging
-
-During development, a genuine race was found in the freeze-timer path: one code path read `frozen_until[t]` without synchronization while another path could update that same value while holding the board mutex.
-
-The fix was to move the read under the same synchronization discipline as the write.
-
-The important lesson is simple:
-
-> Protecting writes alone is not sufficient when concurrent reads can race with those writes.
-
----
-
 ## Agent Behaviors
 
 The three behavior roles repeat when the simulation is run with more than three agents:
