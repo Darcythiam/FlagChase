@@ -438,27 +438,3 @@ Potential future work includes:
 Those are deliberately future experiments rather than claims about the current implementation.
 
 ---
-
-## Why This Project Exists
-
-The project started as a small concurrent simulation and became an exercise in systems reasoning:
-
-```text
-build concurrent behavior
-        ↓
-find a real synchronization bug
-        ↓
-make shared-state access consistent
-        ↓
-measure scaling behavior
-        ↓
-identify an O(N) hot path inside the critical section
-        ↓
-change the data representation
-        ↓
-rerun the same benchmark
-        ↓
-quantify the improvement
-```
-
-The main goal is not the game itself. It is understanding how correctness, synchronization, algorithms, and measurement interact in a concurrent C++ program.
